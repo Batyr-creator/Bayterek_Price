@@ -1,7 +1,6 @@
 from fastapi import APIRouter, UploadFile, File
 import shutil
-# import detector lazily inside handler to avoid heavy startup work
-    from core.detector import detect_vehicles
+
 
 router = APIRouter()
 
@@ -14,6 +13,8 @@ async def analyze_traffic(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     # Считаем машины
+    from core.detector import detect_vehicles
+
     count = detect_vehicles(temp_filename)
 
     # В идеале здесь нужно удалить temp_filename через os.remove()
