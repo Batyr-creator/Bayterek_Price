@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BayterekPrice — Оценка недвижимости в Астане</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Banner -->
+    <header class="header-banner">
+        <h1>BayterekPrice</h1>
+        <p>Оценка стоимости жилья среднего и высшего сегмента в Астане (Python + CSV Model)</p>
+    </header>
+
+    <div class="container my-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <!-- Block 1: Map Section -->
+                <div class="app-card">
+                    <h2 class="section-title">Районы Астаны</h2>
+                    <p class="text-muted small mb-3">Нажмите на маркер на карте или на название района, чтобы выбрать его.</p>
+                    
+                    <div class="mb-3">
+                        <span class="badge-district active" onclick="selectDistrict('Есиль')">Есиль</span>
+                        <span class="badge-district" onclick="selectDistrict('Нура')">Нура</span>
+                        <span class="badge-district" onclick="selectDistrict('Алматы')">Алматы</span>
+                        <span class="badge-district" onclick="selectDistrict('Сарыарка')">Сарыарка</span>
+                        <span class="badge-district" onclick="selectDistrict('Байконыр')">Байконыр</span>
+                    </div>
+
+                    <div id="map"></div>
+                </div>
+
+                <!-- Block 2: Parameters Form -->
+                <div class="app-card">
+                    <h2 class="section-title">Параметры квартиры</h2>
+                    
+                    <form id="priceForm" onsubmit="calculatePrice(event)">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Район</label>
+                                <select class="form-select" id="district" onchange="syncDistrictFromSelect()">
+                                    <option value="Есиль">Есиль</option>
+                                    <option value="Нура">Нура</option>
+                                    <option value="Алматы">Алматы</option>
+                                    <option value="Сарыарка">Сарыарка</option>
+                                    <option value="Байконыр">Байконыр</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Площадь, м²</label>
+                                <input type="number" class="form-control" id="area" value="82" min="15" max="500" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Комнат</label>
+                                <input type="number" class="form-control" id="rooms" value="3" min="1" max="10" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Этаж</label>
+                                <input type="number" class="form-control" id="floor" value="4" min="1" max="50" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Этажей в доме</label>
+                                <input type="number" class="form-control" id="totalFloors" value="4" min="1" max="50" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Год постройки</label>
+                                <input type="number" class="form-control" id="year" value="2015" min="1960" max="2026" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Название ЖК (необязательно)</label>
+                                <input type="text" class="form-control" id="jkName" placeholder="например, ЖК Highvill">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Состояние</label>
+                                <select class="form-select" id="condition">
+                                    <option value="черновая">черновая</option>
+                                    <option value="улучшенная черновая">улучшенная черновая</option>
+                                    <option value="чистовая" selected>чистовая / евроремонт</option>
+                                    <option value="дизайнерский">дизайнерский ремонт</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-calculate">
+                                    <i class="fa-solid fa-calculator me-2"></i> Рассчитать
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Result Block -->
+                    <div id="resultBox" class="result-box mt-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-7">
+                                <h5 class="text-muted mb-1">Ориентировочная рыночная стоимость:</h5>
+                                <div class="price-highlight" id="totalPrice">0 ₸</div>
+                                <div class="text-muted mt-1" id="pricePerMeter">0 ₸ / м²</div>
+                            </div>
+                            <div class="col-md-5 border-start-md pt-3 pt-md-0">
+                                <p class="mb-1"><strong>Детали оценки (Python model):</strong></p>
+                                <small class="d-block text-secondary" id="summaryDetails"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Custom JS -->
+    <script src="js/app.js"></script>
+</body>
+</html>
